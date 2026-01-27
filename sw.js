@@ -1,5 +1,5 @@
 // Simple service worker for offline caching
-const CACHE = "br-tracker-v0.2";
+const CACHE = "br-tracker-v0.3";
 const ASSETS = [
   "./",
   "./index.html",

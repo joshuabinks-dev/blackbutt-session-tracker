@@ -52,6 +52,15 @@ function secToTime(s){
   const r = s % 60;
   return `${m}:${pad2(r)}`;
 }
+function msToTimeTenths(ms){
+  if (ms == null || Number.isNaN(ms)) return \"\";
+  ms = Math.max(0, ms);
+  const total = Math.round(ms/100)/10; // tenths
+  const m = Math.floor(total/60);
+  const s = Math.floor(total % 60);
+  const t = Math.round((total - Math.floor(total))*10);
+  return `${m}:${pad2(s)}.${t}`;
+}
 function timeToSec(t){
   // accept mm:ss or ss
   const v = (t||"").trim();
@@ -80,7 +89,36 @@ function fmtLocal(d){
 // ---------- App State ----------
 const DEFAULT_STATE = {
   athletes: [
-    // {id, first, last, group:"A"|"B", active:true}
+    {id: uid(), first:"Josh", last:"Binks", group:"A", active:true},
+    {id: uid(), first:"India", last:"Binks", group:"A", active:true},
+    {id: uid(), first:"Ruby", last:"McPhillips", group:"A", active:true},
+    {id: uid(), first:"Fin", last:"McPhillips", group:"A", active:true},
+    {id: uid(), first:"Cate", last:"Giason", group:"A", active:true},
+    {id: uid(), first:"Russell", last:"Taylor", group:"A", active:true},
+    {id: uid(), first:"Gary", last:"Baker", group:"A", active:true},
+    {id: uid(), first:"Amelia", last:"Harkness", group:"A", active:true},
+    {id: uid(), first:"Kayden", last:"Elliot", group:"A", active:true},
+    {id: uid(), first:"Macleay", last:"Kesby", group:"A", active:true},
+    {id: uid(), first:"Jasmine", last:"Matthews", group:"A", active:true},
+    {id: uid(), first:"Peter", last:"Maskiell", group:"A", active:true},
+    {id: uid(), first:"Emily", last:"McLaren", group:"A", active:true},
+    {id: uid(), first:"Hamish", last:"McLaren", group:"A", active:true},
+    {id: uid(), first:"Sky", last:"Bell", group:"A", active:true},
+    {id: uid(), first:"Alexis", last:"Bell", group:"A", active:true},
+    {id: uid(), first:"Poppy", last:"Taylor", group:"A", active:true},
+    {id: uid(), first:"Ryan", last:"Martin", group:"A", active:true},
+    {id: uid(), first:"Elias", last:"Niyonkuru", group:"A", active:true},
+    {id: uid(), first:"Pat", last:"Carolan", group:"A", active:true},
+    {id: uid(), first:"Will", last:"Mason", group:"A", active:true},
+    {id: uid(), first:"Harry", last:"Fraser", group:"A", active:true},
+    {id: uid(), first:"Moses", last:"Fowler", group:"A", active:true},
+    {id: uid(), first:"Jed", last:"Fowler", group:"A", active:true},
+    {id: uid(), first:"Tom", last:"March", group:"A", active:true},
+    {id: uid(), first:"Luke", last:"Jones", group:"A", active:true},
+    {id: uid(), first:"Ally", last:"Rogers", group:"A", active:true},
+    {id: uid(), first:"Ash", last:"Gard", group:"A", active:true},
+    {id: uid(), first:"Bianca", last:"De Swardt", group:"A", active:true},
+    {id: uid(), first:"Alex", last:"Torta", group:"A", active:true}
   ],
   presets: [
     {
@@ -99,6 +137,7 @@ const DEFAULT_STATE = {
   activeSessionId: null,
   settings: {
     groups: ["A","B"],
+    locations: [\"Beaton Park\",\"Blackbutt\",\"Myimbarr\",\"Reddall Reserve\",\"Shellharbour SC\",\"West Dapto KJs\"],
     beep: true,
     vibrate: true
   }
@@ -120,6 +159,11 @@ function getActiveSession(){
   return state.sessions.find(s => s.id === state.activeSessionId) || null;
 }
 
+function getSessionGroups(session){
+  const allIn = !!session?.live?.allIn;
+  return allIn ? [\"All\"] : (state.settings.groups || [\"A\",\"B\"]);
+}
+
 // ---------- Timers ----------
 function ensureLive(session){
   if (!session.live){
@@ -127,13 +171,16 @@ function ensureLive(session){
       blockIndex: 0,
       repIndexByBlock: {}, // blockId -> current rep (0-based)
       groupClocks: {}, // group -> {running, startMs, elapsedMs, lastLapMs}
-      repCapture: {} // group -> {capturedAthleteIds:[], repStartISO, repEndISO, elapsedSec}
+      repCapture: {}, // group -> {capturedAthleteIds:[], repStartISO, repEndISO, elapsedSec}
+      restByGroup: {}, // group -> {resting, startMs, restSec}
+      allIn: false
     };
   }
-  const groups = state.settings.groups;
+  const groups = getSessionGroups(session);
   for (const g of groups){
     if (!session.live.groupClocks[g]) session.live.groupClocks[g] = { running:false, startMs:0, elapsedMs:0 };
     if (!session.live.repCapture[g]) session.live.repCapture[g] = { capturedAthleteIds:[], repStartISO:null };
+    if (!session.live.restByGroup[g]) session.live.restByGroup[g] = { resting:false, startMs:0, restSec:0 };
   }
   const b = session.blocks[session.live.blockIndex];
   if (b && session.live.repIndexByBlock[b.id] == null) session.live.repIndexByBlock[b.id] = 0;
@@ -141,13 +188,33 @@ function ensureLive(session){
 function clockTick(){
   const s = getActiveSession();
   if (!s || !s.live) return;
+  ensureLive(s);
+  const groups = getSessionGroups(s);
+  const b = s.blocks[s.live.blockIndex];
   let changed = false;
-  for (const g of state.settings.groups){
+
+  for (const g of groups){
     const c = s.live.groupClocks[g];
     if (c?.running){
       const ms = Date.now() - c.startMs;
       c.elapsedMs = ms;
       changed = true;
+
+      // Auto complete for cycle blocks when cycle duration reached
+      if (b && b.mode === "cycle" && (b.cycleSec||0) > 0 && ms >= b.cycleSec*1000){
+        c.running = false;
+        const cap = s.live.repCapture[g];
+        if (cap){
+          cap.repEndISO = nowISO();
+          cap.elapsedSec = Math.round(ms/100)/10;
+        }
+        const rest = s.live.restByGroup[g] || (s.live.restByGroup[g] = {resting:false,startMs:0,restSec:0});
+        rest.resting = true;
+        rest.startMs = Date.now();
+        rest.restSec = 0;
+        if (state.settings.beep) beep(520, 0.06);
+        changed = true;
+      }
     }
   }
   if (changed && activeTab === "session") render();
@@ -165,44 +232,62 @@ $$(".tab").forEach(b => b.addEventListener("click", () => setTab(b.dataset.tab))
 // ---------- Screens ----------
 function screenHome(){
   const active = getActiveSession();
-  const recent = [...state.sessions].sort((a,b)=> (b.startedAt||"").localeCompare(a.startedAt||"")).slice(0, 10);
+  const templates = state.presets || [];
+  const recent = [...state.sessions].sort((a,b)=> (b.startedAt||"").localeCompare(a.startedAt||"")).slice(0, 12);
 
   return `
     <div class="grid two">
       <div class="card">
+        <h3>Templates</h3>
+        <div class="small muted">Start from a template session.</div>
+        <div class="hr"></div>
+        <div class="list">
+          ${templates.map(t => `
+            <div class="item">
+              <div class="top">
+                <div class="name">${escapeHtml(t.name)}</div>
+                <span class="badge">Template</span>
+              </div>
+              <div class="meta">${escapeHtml(t.description || autoTemplateSummary(t))}</div>
+              <div class="row" style="margin-top:10px">
+                <button class="btn primary" onclick="window.__newSessionFromTemplate('${t.id}')">Start</button>
+              </div>
+            </div>
+          `).join("") || `<div class="muted small">No templates yet.</div>`}
+        </div>
+      </div>
+
+      <div class="card">
         <h3>Today</h3>
         ${active ? `
-          <div class="item" onclick="window.__resumeSession()">
+          <div class="item">
             <div class="top">
               <div class="name">${escapeHtml(active.name)}</div>
               <span class="badge">Active</span>
             </div>
             <div class="meta">${escapeHtml(active.location||"")} · started ${escapeHtml(fmtLocal(active.startedAt))}</div>
-          </div>
-          <div class="row" style="margin-top:10px">
-            <button class="btn primary" onclick="window.__resumeSession()">Resume</button>
-            <button class="btn danger" onclick="window.__endSession()">End session</button>
+            <div class="row" style="margin-top:10px">
+              <button class="btn primary" onclick="window.__resumeSession()">Resume</button>
+              <button class="btn danger" onclick="window.__endSession()">End session</button>
+            </div>
           </div>
         ` : `
           <div class="muted small">No active session.</div>
         `}
         <div class="hr"></div>
-        <div class="row">
-          <button class="btn primary" onclick="window.__newSessionFromPreset()">+ New session</button>
-        </div>
-        <div class="small muted" style="margin-top:8px">Tip: Use Manual Start to control each rep cleanly.</div>
-      </div>
-
-      <div class="card">
         <h3>Recent sessions</h3>
         <div class="list">
           ${recent.length ? recent.map(s => `
-            <div class="item" onclick="window.__openSession('${s.id}')">
+            <div class="item">
               <div class="top">
                 <div class="name">${escapeHtml(s.name)}</div>
                 ${s.id===state.activeSessionId ? `<span class="badge">Active</span>` : ``}
               </div>
               <div class="meta">${escapeHtml(s.location||"")} · ${s.startedAt ? escapeHtml(fmtLocal(s.startedAt)) : "Draft"}</div>
+              <div class="row" style="margin-top:10px">
+                <button class="btn" onclick="window.__openSession('${s.id}')">View</button>
+                <button class="btn danger" onclick="window.__deleteSession('${s.id}')">Delete</button>
+              </div>
             </div>
           `).join("") : `<div class="muted small">No sessions yet.</div>`}
         </div>
@@ -229,12 +314,22 @@ function screenSession(){
   const repIndex = b ? s.live.repIndexByBlock[b.id] : 0;
   const repHuman = b ? (repIndex + 1) : 0;
 
-  const groups = state.settings.groups;
+  const groups = getSessionGroups(session);
   const activeAthletes = s.athletesSnapshot.filter(a => a.active);
 
   return `
     <div class="card">
-      <h3>${escapeHtml(s.name)}</h3>
+      <h3>Session</h3>
+      <div class="grid two">
+        <div>
+          <label>Session name</label>
+          <input id="sessName" value="${escapeHtml(s.name)}" />
+        </div>
+        <div>
+          <label>Location</label>
+          ${renderLocationSelect(s)}
+        </div>
+      </div>
       <div class="row">
         <span class="pill">📍 ${escapeHtml(s.location || "—")}</span>
         <span class="pill">🗓 ${escapeHtml(fmtLocal(s.startedAt))}</span>
@@ -244,6 +339,7 @@ function screenSession(){
       <div class="row">
         <button class="btn" onclick="window.__editAthletes()">Athletes & groups</button>
         <button class="btn" onclick="window.__editBlocks()">Blocks</button>
+        <button class="btn" onclick="window.__toggleAllIn()">${s.live?.allIn ? "All-in: ON" : "All-in: OFF"}</button>
         <div class="spacer"></div>
         <button class="btn danger" onclick="window.__endSession()">End session</button>
       </div>
@@ -303,13 +399,14 @@ function groupTimerCard(session, block, group){
     <div class="card">
       <h3>Group ${group}</h3>
       <div class="timerBox">
-        <div class="timerNum">${secToTime(elapsed)}</div>
+        <div class="timerNum">${msToTimeTenths(c.elapsedMs||0)}</div>
         <div class="spacer"></div>
         <span class="badge">${running ? "Running" : "Stopped"}</span>
       </div>
+      ${renderRestLine(session, block, group)}
       <div class="row" style="margin-top:10px">
         <button class="btn primary" onclick="window.__startRep('${group}')" ${running ? "disabled":""}>Start rep</button>
-        <button class="btn" onclick="window.__stopRep('${group}')" ${!running ? "disabled":""}>End rep</button>
+        <button class="btn" onclick="window.__stopRep('${group}')" ${(block.mode==="manual" ? "disabled" : (!running ? "disabled":""))}>End rep</button>
       </div>
       <div class="small muted" style="margin-top:8px">
         Rep ${repIndex+1} capture started: ${capture?.repStartISO ? escapeHtml(fmtLocal(capture.repStartISO)) : "—"}
@@ -374,8 +471,7 @@ function screenResults(){
       <div class="row">
         <button class="btn primary" onclick="window.__shareImage()">Share image</button>
         <button class="btn" onclick="window.__copyTSV()">Copy table (TSV)</button>
-        <button class="btn" onclick="window.__downloadTSV()">Download .tsv</button>
-      </div>
+              </div>
       <div class="small muted" style="margin-top:8px">Tip: “Share image” uses the logo and auto-fits the table for Messenger/Facebook.</div>
     </div>
 
@@ -473,7 +569,7 @@ function buildTSV(session, rowsObj){
 // ---------- Dialogs (simple prompts) ----------
 async function editAthletesDialog(session){
   // Minimal v0.1: add athlete, toggle active, set group.
-  const groups = state.settings.groups;
+  const groups = getSessionGroups(session);
   const container = document.createElement("div");
   container.innerHTML = `
     <div class="card">
@@ -678,6 +774,54 @@ function escapeHtml(s){
   return String(s ?? "").replace(/[&<>"']/g, (c)=>({ "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;" }[c]));
 }
 
+function renderRestLine(session, block, group){
+  const rest = session?.live?.restByGroup?.[group];
+  if (!rest || !rest.resting) return ``;
+  const elapsed = (Date.now() - rest.startMs) / 1000;
+  const remaining = (rest.restSec || 0) - elapsed;
+  const sign = remaining < 0 ? "-" : "";
+  const abs = Math.abs(remaining);
+  const mm = Math.floor(abs/60);
+  const ss = Math.floor(abs%60);
+  const t = Math.floor((abs - Math.floor(abs))*10);
+  return `
+    <div class="row" style="margin-top:8px">
+      <span class="pill">Rest: ${sign}${mm}:${pad2(ss)}.${t}</span>
+    </div>
+  `;
+}
+
+function renderLocationSelect(session){
+  const opts = (state.settings.locations || []).slice().sort((a,b)=>a.localeCompare(b));
+  const cur = session.location || "";
+  const isCustom = cur && !opts.includes(cur);
+  return `
+    <select id="sessLocSel">
+      <option value="">— Select —</option>
+      ${opts.map(o=>`<option value="${escapeHtml(o)}" ${o===cur?"selected":""}>${escapeHtml(o)}</option>`).join("")}
+      <option value="__custom__" ${isCustom?"selected":""}>Custom…</option>
+    </select>
+    <div id="customLocWrap" style="margin-top:8px; display:${isCustom?"block":"none"}">
+      <input id="sessLocCustom" placeholder="Enter custom location" value="${escapeHtml(isCustom?cur:"")}" />
+    </div>
+  `;
+}
+
+function autoTemplateSummary(t){
+  try{
+    const blocks = t.blocks || [];
+    const parts = blocks.map(b => {
+      const label = (b.label || `${b.distanceM}m`);
+      const reps = b.reps ? `${b.reps}×` : "";
+      const mode = (b.mode==="cycle") ? `on ${secToTime(b.cycleSec)}` : `rest ${secToTime(b.cycleSec)}`;
+      return `${reps}${label} (${mode})`;
+    });
+    return parts.join(" + ");
+  }catch{
+    return "";
+  }
+}
+
 // ---------- Actions ----------
 window.__newSessionFromPreset = async function(){
   if (state.activeSessionId){
@@ -818,6 +962,8 @@ window.__startRep = async function(group){
   clock.startMs = Date.now();
   clock.elapsedMs = 0;
   s.live.repCapture[group] = { capturedAthleteIds: [], repStartISO: nowISO() };
+  const rest = s.live.restByGroup[group];
+  if (rest){ rest.resting = false; rest.startMs = 0; }
 
   if (state.settings.vibrate && navigator.vibrate) navigator.vibrate(35);
   if (state.settings.beep) beep();
@@ -862,12 +1008,31 @@ window.__tapFinish = async function(group, athleteId){
   const cap = s.live.repCapture[group];
   if (cap.capturedAthleteIds.includes(athleteId)) return;
 
-  const elapsedSec = Math.round(clock.elapsedMs/1000);
+  const elapsedSec = Math.round(clock.elapsedMs/100) / 10; // tenths
   const key = `${athleteId}|${s.live.blockIndex}|${rep}`;
   s.results[key] = elapsedSec;
   cap.capturedAthleteIds.push(athleteId);
 
   if (state.settings.vibrate && navigator.vibrate) navigator.vibrate(10);
+
+  if ((b.mode || "manual") === "manual"){
+    const activeIds = s.athletesSnapshot.filter(a => a.active && (a.group||"A")===group).map(a=>a.id);
+    const done = activeIds.every(id => cap.capturedAthleteIds.includes(id));
+    if (done){
+      clock.running = false;
+      cap.repEndISO = nowISO();
+      cap.elapsedSec = elapsedSec;
+      const rest = s.live.restByGroup[group];
+      if (rest){
+        rest.resting = true;
+        rest.startMs = Date.now();
+        rest.restSec = Math.max(0, b.cycleSec || 0);
+      }
+      if (state.settings.beep) beep(520, 0.06);
+      if (state.settings.vibrate && navigator.vibrate) navigator.vibrate([20,30,20]);
+    }
+  }
+
   await saveState();
   render();
 };
@@ -928,31 +1093,36 @@ window.__factoryReset = async function(){
 };
 
 window.__copyTSV = async function(){
-  const box = $("#tsvBox");
-  if (!box) return;
-  box.select();
-  box.setSelectionRange(0, box.value.length);
-  try{
-    await navigator.clipboard.writeText(box.value);
-    toast("Copied");
-  }catch{
-    document.execCommand("copy");
-    toast("Copied");
-  }
-};
-
-window.__downloadTSV = function(){
   const s = getActiveSession() || state.sessions.slice().sort((a,b)=> (b.startedAt||"").localeCompare(a.startedAt||""))[0];
+  if (!s){ toast("No session"); return; }
   const rows = buildResultsRows(s);
   const tsv = buildTSV(s, rows);
-  const blob = new Blob([tsv], {type:"text/tab-separated-values"});
-  const a = document.createElement("a");
-  a.href = URL.createObjectURL(blob);
-  a.download = `${(s.name||"session").replace(/[^a-z0-9]+/gi,"_")}.tsv`;
-  document.body.appendChild(a);
-  a.click();
-  a.remove();
+
+  try{
+    await navigator.clipboard.writeText(tsv);
+    toast("Copied");
+    return;
+  }catch(e){}
+
+  try{
+    const ta = document.createElement("textarea");
+    ta.value = tsv;
+    ta.setAttribute("readonly","");
+    ta.style.position = "fixed";
+    ta.style.left = "-9999px";
+    ta.style.top = "0";
+    document.body.appendChild(ta);
+    ta.select();
+    ta.setSelectionRange(0, ta.value.length);
+    document.execCommand("copy");
+    ta.remove();
+    toast("Copied");
+    return;
+  }catch(e){}
+
+  prompt("Copy table (TSV):", tsv);
 };
+
 
 window.__shareImage = async function(){
   const s = getActiveSession() || state.sessions.slice().sort((a,b)=> (b.startedAt||"").localeCompare(a.startedAt||""))[0];
@@ -1128,6 +1298,35 @@ function render(){
   else if (activeTab === "results") el.innerHTML = screenResults();
   else el.innerHTML = screenSettings();
   $$(".tab").forEach(b => b.classList.toggle("active", b.dataset.tab===activeTab));
+
+  // Wire up session name/location inputs
+  if (activeTab === "session"){
+    const s = getActiveSession();
+    if (s){
+      const nameEl = $("#sessName");
+      if (nameEl){
+        nameEl.onchange = async () => { s.name = nameEl.value.trim() || s.name; await saveState(); toast("Saved"); };
+      }
+      const locSel = $("#sessLocSel");
+      const customWrap = $("#customLocWrap");
+      if (locSel){
+        locSel.onchange = async () => {
+          if (locSel.value === "__custom__"){
+            if (customWrap) customWrap.style.display = "block";
+            const ce = $("#sessLocCustom"); if (ce) ce.focus();
+          } else {
+            if (customWrap) customWrap.style.display = "none";
+            s.location = locSel.value || "";
+            await saveState(); toast("Saved");
+          }
+        };
+      }
+      const locCustom = $("#sessLocCustom");
+      if (locCustom){
+        locCustom.onchange = async () => { s.location = locCustom.value.trim(); await saveState(); toast("Saved"); };
+      }
+    }
+  }
 }
 window.render = render;
 
