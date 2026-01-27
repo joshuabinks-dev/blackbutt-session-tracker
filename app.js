@@ -262,6 +262,10 @@ function screenSession(){
         <div class="row">
           <div style="font-weight:1000">Rep ${repHuman} / ${b.reps}</div>
           <div class="spacer"></div>
+          <button class="btn" onclick="window.__prevRep()" ${repIndex===0 ? "disabled":""}>◀ Rep</button>
+          <button class="btn primary" onclick="window.__nextRep()" ${repIndex>=b.reps-1 ? "disabled":""}>Next rep ▶</button>
+        </div>
+        <div class="row" style="margin-top:10px">
           <button class="btn" onclick="window.__prevBlock()" ${s.live.blockIndex===0 ? "disabled":""}>◀ Block</button>
           <button class="btn" onclick="window.__nextBlock()" ${s.live.blockIndex===s.blocks.length-1 ? "disabled":""}>Block ▶</button>
         </div>
@@ -761,6 +765,50 @@ window.__nextBlock = async function(){
   render();
 };
 
+window.__prevRep = async function(){
+  const s = getActiveSession(); if (!s) return;
+  ensureLive(s);
+  const b = s.blocks[s.live.blockIndex];
+  if (!b) return;
+  const cur = s.live.repIndexByBlock[b.id] || 0;
+  if (cur <= 0) return;
+
+  // Stop + reset clocks and clear capture state for all groups
+  for (const g of state.settings.groups){
+    const c = s.live.groupClocks[g];
+    if (c){ c.running = false; c.elapsedMs = 0; c.startMs = 0; }
+    s.live.repCapture[g] = { capturedAthleteIds: [], repStartISO: null };
+  }
+
+  s.live.repIndexByBlock[b.id] = cur - 1;
+  if (state.settings.vibrate && navigator.vibrate) navigator.vibrate(20);
+  await saveState();
+  render();
+};
+
+window.__nextRep = async function(){
+  const s = getActiveSession(); if (!s) return;
+  ensureLive(s);
+  const b = s.blocks[s.live.blockIndex];
+  if (!b) return;
+  const cur = s.live.repIndexByBlock[b.id] || 0;
+  if (cur >= b.reps - 1) return;
+
+  // Stop + reset clocks and clear capture state for all groups
+  for (const g of state.settings.groups){
+    const c = s.live.groupClocks[g];
+    if (c){ c.running = false; c.elapsedMs = 0; c.startMs = 0; }
+    s.live.repCapture[g] = { capturedAthleteIds: [], repStartISO: null };
+  }
+
+  s.live.repIndexByBlock[b.id] = cur + 1;
+  if (state.settings.vibrate && navigator.vibrate) navigator.vibrate([15, 40, 15]);
+  if (state.settings.beep) beep(740, 0.05);
+  await saveState();
+  render();
+};
+
+
 window.__startRep = async function(group){
   const s = getActiveSession(); if (!s) return;
   ensureLive(s);
@@ -788,21 +836,10 @@ window.__stopRep = async function(group){
   clock.running = false;
   const elapsedSec = Math.round(clock.elapsedMs/1000);
 
-  // If not all athletes tapped, that's OK; captured athletes get times, others stay blank.
+  // Record metadata only. Rep advancement is coach-controlled via Next rep.
   const cap = s.live.repCapture[group];
   cap.repEndISO = nowISO();
   cap.elapsedSec = elapsedSec;
-
-  // Advance rep for block if BOTH groups have stopped for this rep OR if block only uses subset
-  // For v0.1: advance when the coach stops any group, but do not exceed reps.
-  const cur = s.live.repIndexByBlock[b.id] || 0;
-  const next = Math.min(b.reps-1, cur); // keep index until recording
-  // Only bump if at least one athlete captured this group
-  if ((cap.capturedAthleteIds||[]).length>0){
-    // bump block rep index once per stop if all groups are stopped
-    const allStopped = (b.groups || state.settings.groups).every(g => !s.live.groupClocks[g]?.running);
-    if (allStopped && cur < b.reps-1) s.live.repIndexByBlock[b.id] = cur + 1;
-  }
 
   if (state.settings.vibrate && navigator.vibrate) navigator.vibrate(25);
   if (state.settings.beep) beep(520, 0.06);

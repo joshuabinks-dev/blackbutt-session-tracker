@@ -28,5 +28,5 @@ Then open:
 ## Next improvements (v0.2)
 - Multi-block image paging (if many columns)
 - Rest countdown logic per block (last finisher + cycle rules)
-- Better "rep complete" flow and per-group rep advancement
+- Coach-controlled rep advancement (Next/Prev rep buttons)
 - Read-only share links and Google Sheets sync
