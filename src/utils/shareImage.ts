@@ -6,7 +6,6 @@ export async function shareElementAsPng(el: HTMLElement, filename="results.png")
     const res = await fetch(dataUrl);
     const blob = await res.blob();
     const file = new File([blob], filename, { type:"image/png" });
-    // @ts-expect-error
     if (navigator.share && (navigator as any).canShare?.({ files:[file] })) {
       await navigator.share({ files:[file], title:"Session Results" });
       return { ok:true, message:"Shared" };
