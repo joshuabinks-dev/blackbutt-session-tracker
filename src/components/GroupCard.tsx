@@ -54,7 +54,7 @@ export function GroupCard(props: { session: LiveSession; groupId: GroupId; nowMs
           <button className="btn primary" disabled={!canStart} onClick={() => api.startWork(groupId)}>
             {isJoiner ? "Start / Resume" : "Start rep"}
           </button>
-          <button className="btn" disabled={!item?.skippable} onClick={() => api.skipItem(groupId)}>Skip</button>
+          <button className="btn" disabled={!(item && item.type === "joiner" && item.skippable)} onClick={() => api.skipItem(groupId)}>Skip</button>
           <button className="btn" disabled={!item} onClick={() => api.next(groupId)}>Next</button>
         </div>
       </div>
