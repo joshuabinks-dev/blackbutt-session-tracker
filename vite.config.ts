@@ -3,6 +3,5 @@ import react from "@vitejs/plugin-react";
 
 export default defineConfig({
   plugins: [react()],
-  // For GitHub Pages, set base to "/<repo-name>/"
-  // base: "/blackbutt-session-tracker/",
+  base: "/blackbutt-session-tracker/",
 });
