@@ -1,8 +1,9 @@
+
 name: Deploy to GitHub Pages
 
 on:
   push:
-    branches: ["main"]
+    branches: [ "main" ]
   workflow_dispatch:
 
 permissions:
@@ -25,13 +26,10 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: 20
-          cache: npm
-
-      - name: Pin npm (workaround for npm bug)
-        run: npm i -g npm@10.7.0
+          cache: "npm"
 
       - name: Install
-        run: npm ci --no-audit --no-fund
+        run: npm ci
 
       - name: Build
         run: npm run build
