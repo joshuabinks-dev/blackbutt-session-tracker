@@ -30,6 +30,17 @@ jobs:
       - name: Install
         run: npm ci --include=dev
 
+      - name: Show npm config (diagnostic)
+        run: |
+        npm config get production
+        npm config get omit
+        npm config list
+
+      - name: Check TypeScript presence (diagnostic)
+        run: |
+        ls -la node_modules/typescript || true
+        ls -la node_modules/typescript/bin || true
+
       - name: Build
         run: npm run build
 
