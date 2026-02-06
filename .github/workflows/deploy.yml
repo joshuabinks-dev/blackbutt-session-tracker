@@ -27,19 +27,11 @@ jobs:
           node-version: 20
           cache: npm
 
-      - name: Install (include dev dependencies)
-        run: npm ci --include=dev
+      - name: Pin npm (workaround for npm bug)
+        run: npm i -g npm@10.7.0
 
-      - name: Show npm config (diagnostic)
-        run: |
-          npm config get production
-          npm config get omit
-          npm config list
-
-      - name: Check TypeScript presence (diagnostic)
-        run: |
-          ls -la node_modules/typescript || true
-          ls -la node_modules/typescript/bin || true
+      - name: Install
+        run: npm ci --no-audit --no-fund
 
       - name: Build
         run: npm run build
