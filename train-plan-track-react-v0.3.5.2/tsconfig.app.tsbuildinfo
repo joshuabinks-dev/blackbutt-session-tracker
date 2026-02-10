@@ -1,1 +1,0 @@
-{"root":["./src/App.tsx","./src/main.tsx","./src/screens/Build.tsx","./src/screens/Home.tsx","./src/screens/Results.tsx","./src/screens/SessionRunner.tsx","./src/state/store.ts","./src/state/types.ts","./src/utils/clipboard.ts","./src/utils/sharePng.ts","./src/utils/time.ts"],"version":"5.9.3"}
