@@ -27,9 +27,7 @@ jobs:
 
       # ✅ Force devDependencies to install
       - name: Install (include dev deps)
-        run: |
-          npm config set production false
-          npm ci --include=dev --no-audit --no-fund
+        run: npm ci --include=dev --no-audit --no-fund
 
       # ✅ Optional sanity check (leave in for now)
       - name: Verify TypeScript installed
