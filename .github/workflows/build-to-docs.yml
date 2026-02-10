@@ -25,8 +25,15 @@ jobs:
           node-version: 20
           cache: "npm"
 
-      - name: Install
-        run: npm ci --no-audit --no-fund
+      # ✅ Force devDependencies to install
+      - name: Install (include dev deps)
+        run: |
+          npm config set production false
+          npm ci --include=dev --no-audit --no-fund
+
+      # ✅ Optional sanity check (leave in for now)
+      - name: Verify TypeScript installed
+        run: ls -la node_modules/typescript/bin/tsc
 
       - name: Build
         run: npm run build
@@ -36,7 +43,6 @@ jobs:
           rm -rf docs
           mkdir -p docs
           cp -R dist/* docs/
-          # SPA fallback for hash routing (optional but recommended)
           cp docs/index.html docs/404.html
 
       - name: Commit /docs
