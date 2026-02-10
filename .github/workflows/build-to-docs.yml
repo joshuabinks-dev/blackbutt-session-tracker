@@ -1,0 +1,48 @@
+name: Build to /docs (GitHub Pages)
+
+on:
+  workflow_dispatch:
+  push:
+    branches: ["main"]
+
+permissions:
+  contents: write
+
+concurrency:
+  group: "build-docs"
+  cancel-in-progress: true
+
+jobs:
+  build_docs:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: "npm"
+
+      - name: Install
+        run: npm ci --no-audit --no-fund
+
+      - name: Build
+        run: npm run build
+
+      - name: Replace /docs with dist output
+        run: |
+          rm -rf docs
+          mkdir -p docs
+          cp -R dist/* docs/
+          # SPA fallback for hash routing (optional but recommended)
+          cp docs/index.html docs/404.html
+
+      - name: Commit /docs
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add docs
+          git commit -m "Build: publish to /docs" || echo "No changes to commit"
+          git push
