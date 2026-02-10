@@ -1,4 +1,4 @@
-name: Build to /docs (GitHub Pages)
+  name: Build to /docs (GitHub Pages)
 
 on:
   workflow_dispatch:
@@ -26,8 +26,13 @@ jobs:
           cache: "npm"
 
       # ✅ Force devDependencies to install
-      - name: Install (include dev deps)
-        run: npm ci --include=dev --no-audit --no-fund
+      - name: Install (force dev deps)
+        run: |
+          echo "npm_config_omit=$npm_config_omit"
+          npm ci --omit=optional --include=dev --no-audit --no-fund
+      
+      - name: Show npm config omit
+        run: npm config get omit || true
 
       # ✅ Optional sanity check (leave in for now)
       - name: Verify TypeScript installed
