@@ -1,0 +1,55 @@
+:root{--bg: #f6f7fb;--card: #ffffff;--text: #111111;--muted: #666666;--muted2: #555555;--border: #e7e7ef;--tabBg: #f1f2f6;--shadow: rgba(0,0,0,.05);--primary: #111111;--primaryText: #ffffff;--accent: #2563eb;--dangerBg: #ffecec;--dangerBorder: #ffc5c5;--dangerText: #a10000;--capturedBg: #f1f2f6;--capturedBorder: #d7d9e3;--pillBg: #f1f2f6}body{margin:0;font-family:-apple-system,BlinkMacSystemFont,Segoe UI,Roboto,Helvetica Neue,Arial,sans-serif;background:var(--bg);color:var(--text)}.app{min-height:100vh;display:flex;flex-direction:column}.header{background:var(--card);border-bottom:1px solid var(--border);padding:12px 14px}.brand{display:flex;flex-direction:column;gap:2px}.brandTitle{font-size:18px;font-weight:700}.brandSub{font-size:12px;color:var(--muted2)}.tabs{display:flex;gap:8px;margin-top:10px;flex-wrap:wrap}.tab{text-decoration:none;padding:8px 12px;border-radius:12px;background:var(--tabBg);color:var(--text);font-weight:600;font-size:13px;transition:background .12s ease,transform .12s ease}.tabActive{background:var(--primary);color:var(--primaryText)}.main{padding:14px;display:flex;flex-direction:column;gap:12px}.stack{display:flex;flex-direction:column;gap:12px}.card{background:var(--card);border:1px solid var(--border);border-radius:16px;padding:16px;box-shadow:0 6px 18px var(--shadow);transition:box-shadow .16s ease,transform .16s ease}.row{display:flex;align-items:center;gap:10px}.grow{flex:1}.title{font-weight:600}.titleInput{font-weight:700;width:100%;padding:10px 12px;border-radius:12px;border:1px solid var(--border);font-size:16px;box-sizing:border-box}.sub{font-size:12px;color:var(--muted2)}.muted{font-size:12px;color:var(--muted)}.label{font-size:12px;font-weight:600;display:block;margin-bottom:6px}select,input{width:100%;padding:10px 12px;border-radius:12px;border:1px solid var(--border);font-size:14px;box-sizing:border-box}.btn,.btnPrimary,.btnDanger,.btnDone,.btnActive,.btnInactive{padding:10px 12px;border-radius:12px;border:1px solid var(--border);background:var(--tabBg);font-weight:600;font-size:14px;transition:transform 80ms ease,background .12s ease,border-color .12s ease,opacity .12s ease}.btn:active,.btnPrimary:active,.btnDanger:active{transform:translateY(1px)}.btnPrimary{background:#111;border-color:var(--text);color:#fff}.btnDanger{background:var(--dangerBg);border-color:var(--dangerBorder);color:var(--dangerText)}.btnDone{background:#111;border-color:#111;color:#fff}.btnActive{background:var(--accent);border-color:var(--accent);color:#fff}.btnInactive{background:transparent;border-color:var(--border);color:var(--text)}.btnInactive:hover{background:#00000008}.btn:disabled,.btnPrimary:disabled{opacity:.5}.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:12px}.groupCard{border:1px solid var(--border);border-radius:16px;padding:14px;box-shadow:0 4px 14px var(--shadow)}.groupAccent{border-left-width:6px;border-left-style:solid;padding-left:10px}.groupAccent_A{border-left-color:#2563eb}.groupAccent_B{border-left-color:#16a34a}.groupAccent_C{border-left-color:#f59e0b}.groupAccent_D{border-left-color:#7c3aed}.pill{display:inline-block;font-size:11px;font-weight:900;padding:4px 8px;border-radius:999px;background:var(--pillBg)}.timer{font-size:18px;font-weight:900;margin-top:4px}.captureGrid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:10px}.tableWrap{overflow:auto;border:1px solid var(--border);border-radius:12px;margin-top:12px}.table{border-collapse:collapse;width:max-content;min-width:100%}.table th,.table td{border-bottom:1px solid var(--border);padding:8px 10px;font-size:12px;white-space:nowrap}.table thead th{position:sticky;top:0;background:var(--card);z-index:2}.sticky{position:sticky;left:0;background:var(--card);z-index:3}.nameCell{display:flex;flex-direction:column;gap:2px}.nameMain{font-weight:900}.nameSub{font-size:11px;color:#666}.inactiveRow{opacity:.6}@media (max-width: 480px){.captureGrid{grid-template-columns:repeat(2,1fr)}}.grid2{display:grid;grid-template-columns:1fr;gap:10px}@media (min-width: 700px){.grid2{grid-template-columns:1fr 1fr}}.seg{display:inline-flex;border:1px solid #e7e7ef;border-radius:12px;overflow:hidden}.segOn,.segOff{padding:8px 10px;border:0;background:#fff;font-weight:800}.segOn{background:#111;color:#fff}.segOff{background:#fff;color:var(--text)}.listItem,.listItemActive{text-align:left;padding:10px;border-radius:12px;border:1px solid var(--border);background:var(--card);cursor:pointer}.listItemActive{border-color:var(--text)}.miniCard{padding:10px;border-radius:12px;border:1px solid var(--border);background:#7f7fff0f}.btnSmall{padding:8px 10px;margin:4px 4px 0 0;border-radius:10px;border:1px solid #e7e7ef;background:#fff;font-weight:800}.sequenceItem{padding:10px;border-radius:12px;border:1px dashed #7b7fa1;background:var(--card)}.toast{margin-top:8px;font-weight:800}.tag{display:inline-block;padding:4px 10px;border-radius:999px;background:#eef2ff;color:#1e3a8a;font-weight:800;font-size:12px}.headerTop{display:flex;align-items:flex-start;justify-content:space-between;gap:12px}.card:hover{box-shadow:0 10px 26px var(--shadow)}.tab:hover{transform:translateY(-1px)}.timer{font-size:18px;font-weight:900;margin-top:4px;font-variant-numeric:tabular-nums;font-feature-settings:"tnum";font-family:ui-monospace,SFMono-Regular,Menlo,Monaco,Consolas,Liberation Mono,Courier New,monospace;white-space:nowrap}.timerDigits{display:inline-block;min-width:14ch;text-align:right}.pill_idle{opacity:.75}.pill_running{background:#22c55e26;border:1px solid rgba(34,197,94,.35)}.pill_resting{background:#3b82f626;border:1px solid rgba(59,130,246,.35)}.pill_ready{background:#9ca3af2e;border:1px solid rgba(156,163,175,.35)}.pill_complete{background:#f59e0b26;border:1px solid rgba(245,158,11,.35)}.timer_running{color:#16a34a}.timer_resting{color:#2563eb}.timer_ready{color:var(--muted2)}.captureGridDisabled{opacity:.55}.captureCols{display:flex;gap:10px;margin-top:10px}.captureCol{flex:1;display:flex;flex-direction:column;gap:8px}.captureCol_divider{padding-right:10px;border-right:1px solid var(--border)}.btnLine1{font-weight:900}.btnLine2{font-weight:800;font-size:12px;opacity:.9;min-height:14px}.richSelect{position:relative}.richSelectBtn{width:100%;border-radius:14px;border:1px solid var(--border);background:var(--card);padding:10px 12px;display:flex;align-items:center;gap:10px;cursor:pointer;text-align:left}.richSelectBtnText{flex:1;min-width:0}.richSelectPlaceholder{color:var(--muted);font-weight:800}.richSelectChevron{font-weight:900;opacity:.75}.richSelectTitle{font-weight:900}.richSelectSub{font-size:12px;color:var(--muted);margin-top:2px;white-space:pre-wrap}.richSelectPanel{position:absolute;top:calc(100% + 8px);left:0;right:0;background:var(--card);border:1px solid var(--border);border-radius:14px;box-shadow:0 10px 30px var(--shadow);z-index:20;overflow:hidden}.richSelectSearch{width:100%;border:0;border-bottom:1px solid var(--border);border-radius:0;padding:10px 12px;background:transparent;color:var(--text);outline:none}.richSelectList{max-height:320px;overflow:auto}.richSelectItem{width:100%;padding:10px 12px;background:transparent;border:0;text-align:left;cursor:pointer;border-bottom:1px solid var(--border);color:var(--text)}.richSelectItem:hover{background:#7f7fff14}.richSelectItemActive{background:#2563eb1f}@media (max-width: 480px){.richSelectSub{line-height:1.2}}.searchInput{width:100%;border-radius:12px;border:1px solid var(--border);padding:10px 12px;background:var(--card);color:var(--text)}
+
+
+/* --- Athletes & Groups: mobile portrait inline row + readable disabled controls (Option A) --- */
+/* The athlete row already uses className="attendRow" in the JS */
+.attendRow{
+  display:flex;
+  align-items:center;
+  gap:10px;
+}
+
+/* Override global select,input{width:100%...} so the checkbox doesn't become full-width */
+.attendRow input[type="checkbox"]{
+  width:auto;
+  padding:0;
+  flex:0 0 auto;
+  border-radius:6px;
+}
+
+/* Keep name button and group select on the same line and allow truncation */
+.attendRow button{
+  flex:1 1 auto;
+  min-width:0;
+}
+
+/* Keep the group selector compact */
+.attendRow select{
+  width:72px;
+  min-width:72px;
+  flex:0 0 auto;
+}
+
+/* Option A: controls stay disabled until attending, but should remain readable (not greyed out) */
+.attendRow .btn:disabled,
+.attendRow .btnActive:disabled,
+.attendRow .btnInactive:disabled{
+  opacity:1;                 /* undo .btn:disabled opacity */
+  color:var(--text);
+  background:var(--pillBg);  /* subtle 'inactive' look while still readable */
+  cursor:not-allowed;
+}
+
+/* Disabled selects are greyed by the browser; override to keep text readable */
+.attendRow select:disabled{
+  opacity:1;
+  color:var(--text);
+  -webkit-text-fill-color: var(--text);
+  background:var(--pillBg);
+  cursor:not-allowed;
+}
+
+@media (max-width:480px){
+  .attendRow{gap:8px;}
+  .attendRow select{width:64px;min-width:64px;}
+}
